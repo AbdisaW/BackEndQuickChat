@@ -1,0 +1,22 @@
+# Node modules
+node_modules/
+**/node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
+
+# Docker
+*.dockerfile
+docker-compose.override.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Yarn
+yarn-error.log
