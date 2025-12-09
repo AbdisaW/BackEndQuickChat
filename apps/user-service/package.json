@@ -1,0 +1,26 @@
+{
+  "name": "user-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "dev": "nodemon app.js",
+    "start": "node src/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.15.3",
+    "redis": "^5.10.0",
+    "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
