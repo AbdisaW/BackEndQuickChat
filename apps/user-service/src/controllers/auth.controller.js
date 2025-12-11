@@ -1,7 +1,8 @@
 const RegisterDTO = require("../dto/register.dto");
 const VerifyOtpDTO = require("../dto/verifyOtp.dto");
 const ResendOtpDTO = require("../dto/resendOtp.dto")
-const { registerUser, verifyOtp, reSendOtp } = require("../services/auth.service");
+const LoginDTO = require('../dto/login.dto')
+const { registerUser, verifyOtp, reSendOtp ,loginUser} = require("../services/auth.service");
 
 const register = async (req, res, next) => {
   try {
@@ -40,4 +41,19 @@ const reSend = async (req, res, next) => {
 
 }
 
-module.exports = { register, verify, reSend };
+const login = async (req, res, next) =>{
+  try {
+    const dto = new LoginDTO(req.body);
+    dto.validate();
+
+    const result = await loginUser(dto);
+
+    return res.status(result.status).json(result);
+
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
+}
+
+
+module.exports = { register, verify, reSend, login };

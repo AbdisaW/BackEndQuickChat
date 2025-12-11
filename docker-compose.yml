@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # MySQL Service
   mysql:
     image: mysql:8
     container_name: chat-mysql
@@ -12,6 +13,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
+  # MongoDB Service
   mongo:
     image: mongo:6
     container_name: chat-mongo
@@ -20,18 +22,54 @@ services:
     volumes:
       - mongo_data:/data/db
 
+  # Redis Service
   redis:
     image: redis:7
     container_name: chat-redis
     ports:
       - "6379:6379"
 
+  # RabbitMQ Service
   rabbitmq:
     image: rabbitmq:3-management
     container_name: chat-rabbit
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  # User Microservice
+  user-service:
+    build: ./apps/user-service
+    container_name: user-service
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: password
+      DB_NAME: quick_chat
+      REDIS_HOST: redis
+    depends_on:
+      - mysql
+      - redis
+
+ 
+  message-service:
+  build: ./apps/message-service
+  container_name: message-service
+  ports:
+    - "3001:3001"
+  environment:
+    NODE_ENV: development
+    MONGO_URI: mongodb://mongo:27017/quick_chat
+    REDIS_HOST: redis
+    RABBITMQ_HOST: rabbitmq
+  depends_on:
+    - mongo
+    - redis
+    - rabbitmq
+
 
 volumes:
   mysql_data:

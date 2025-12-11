@@ -1,8 +1,14 @@
 const { DataTypes } = require("sequelize");
-const sequelize = require('@quickchat/database');
+const sequelize = require('../../../../libs/database/mysql');
 
 const User = sequelize.define("User", {
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4, 
+        primaryKey: true,
+        allowNull: false
+         
+    },
     firstName: { type: DataTypes.STRING, allowNull: false },
     lastName: { type: DataTypes.STRING, allowNull: false },
     email: { type: DataTypes.STRING, allowNull: false, unique: true },

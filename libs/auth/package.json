@@ -1,6 +1,0 @@
-{
-  "name": "@quickchat/auth",
-  "version": "1.0.0",
-  "main": "jwt.js",
-  "private": true
-}

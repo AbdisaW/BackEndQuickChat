@@ -1,6 +1,0 @@
-{
-  "name": "@quickchat/database",
-  "version": "1.0.0",
-  "main": "mysql.js",
-  "private": true
-}

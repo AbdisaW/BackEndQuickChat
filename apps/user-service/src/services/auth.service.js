@@ -41,4 +41,23 @@ const reSendOtp = async ({ email }) => {
   return { message: "OTP re-sent successfully" };
 };
 
-module.exports = { registerUser, verifyOtp, reSendOtp };
+const loginUser = async ({ email, password }) => {
+  const user = await findByEmail(email);
+  if (!user) throw new Error("Invalid credentials!");
+
+  if (user.status === "PENDING") {
+    return { status: 403, message: "Your account is not verified. Please verify your email to continue.." };
+  }
+
+  const isValid = await bcrypt.compare(password, user.password);
+  if (!isValid) throw new Error("Invalid credentials!");
+
+  return {
+    status: 200,
+    message: "Login successful",
+    user
+  };
+};
+
+
+module.exports = { registerUser, verifyOtp, reSendOtp, loginUser };

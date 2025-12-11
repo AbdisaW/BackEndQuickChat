@@ -1,6 +1,0 @@
-{
-  "name": "@quickchat/common",
-  "version": "1.0.0",
-  "main": "utils.js",
-  "private": true
-}

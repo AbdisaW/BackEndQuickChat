@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
-const SECRET = 'your_super_secret_key'; // replace with env variable later
-
+const SECRET = 'your_super_secret_key'; 
 function sign(payload, expiresIn = '1h') {
   return jwt.sign(payload, SECRET, { expiresIn });
 }
