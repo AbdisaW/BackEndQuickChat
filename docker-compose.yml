@@ -42,7 +42,7 @@ services:
     build: ./apps/user-service
     container_name: user-service
     ports:
-      - "3000:3000"
+      - "4000:4000"
     environment:
       NODE_ENV: development
       DB_HOST: mysql
@@ -54,22 +54,21 @@ services:
       - mysql
       - redis
 
- 
-  message-service:
-  build: ./apps/message-service
-  container_name: message-service
-  ports:
-    - "3001:3001"
-  environment:
-    NODE_ENV: development
-    MONGO_URI: mongodb://mongo:27017/quick_chat
-    REDIS_HOST: redis
-    RABBITMQ_HOST: rabbitmq
-  depends_on:
-    - mongo
-    - redis
-    - rabbitmq
-
+  # Message Microservice
+  # message-service:
+  #   build: ./apps/message-service
+  #   container_name: message-service
+  #   ports:
+  #     - "3001:3001"
+  #   environment:
+  #     NODE_ENV: development
+  #     MONGO_URI: mongodb://mongo:27017/quick_chat
+  #     REDIS_HOST: redis
+  #     RABBITMQ_HOST: rabbitmq
+  #   depends_on:
+  #     - mongo
+  #     - redis
+  #     - rabbitmq
 
 volumes:
   mysql_data:

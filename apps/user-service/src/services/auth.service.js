@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const { createUser, findByEmail, verifyUser } = require("../repositories/user.repository");
 const { setOtp, getOtp, deleteOtp } = require("../models/otp.model");
+const {sign} = require('../../../../libs/auth/jwt')
 const crypto = require("crypto");
 
 const registerUser = async ({ firstName, lastName, email, password }) => {
@@ -17,47 +18,41 @@ const registerUser = async ({ firstName, lastName, email, password }) => {
   return { message: "User registered. OTP sent." };
 };
 
-const verifyOtp = async ({ email, otp }) => {
+const verifyOtp = async (email, otp) => {
   const savedOtp = await getOtp(email);
   if (!savedOtp) throw new Error("OTP expired or not found");
   if (savedOtp !== otp) throw new Error("Invalid OTP");
 
-  await verifyUser(email);
+  await verifyUser(email)
   await deleteOtp(email);
 
-  return { message: "User verified successfully." };
+  return { message: "User verified successfully" };
 };
 
-const reSendOtp = async ({ email }) => {
+const resendOtp = async (email) => {
   const user = await findByEmail(email);
-
   if (!user) throw new Error("User not found");
-  if (user.status !== "PENDING") throw new Error("User already verified");
 
+  if(user.status !== "PENDING") throw new Error ("user is active ")
   const otp = crypto.randomInt(100000, 999999).toString();
   await setOtp(email, otp);
 
-  console.log(`OTP for ${email}: ${otp}`);
-  return { message: "OTP re-sent successfully" };
+  console.log(`Resent OTP for ${email}: ${otp}`);
+  return { message: "OTP resent successfully" };
 };
+const loginUser = async (email, password) => {
+  const user = await  findByEmail(email);
+  if (!user) throw new Error("Invalid credentials");
 
-const loginUser = async ({ email, password }) => {
-  const user = await findByEmail(email);
-  if (!user) throw new Error("Invalid credentials!");
+  if (!user.isVerified) throw new Error("User not verified");
 
-  if (user.status === "PENDING") {
-    return { status: 403, message: "Your account is not verified. Please verify your email to continue.." };
-  }
+  const valid = await bcrypt.compare(password, user.password);
+  if (!valid) throw new Error("Invalid credentials");
 
-  const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) throw new Error("Invalid credentials!");
-
-  return {
-    status: 200,
-    message: "Login successful",
-    user
-  };
+  const token = sign({ id: user.id, email: user.email });
+  const { password: _, ...userWithoutPassword } = user.toJSON();
+  return { user: userWithoutPassword, token };
 };
 
 
-module.exports = { registerUser, verifyOtp, reSendOtp, loginUser };
+module.exports = { registerUser, verifyOtp, resendOtp, loginUser };

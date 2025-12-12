@@ -2,7 +2,7 @@ const redisClient = require('../../../../libs/database/redis');
 
 const OTP_PREFIX = "otp:";
 
-const setOtp = async (email, otp, ttl = 100) => { 
+const setOtp = async (email, otp, ttl = 500) => { 
   await redisClient.setEx(`${OTP_PREFIX}${email}`, ttl, otp);
 };
 

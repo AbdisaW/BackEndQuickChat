@@ -1,15 +1,11 @@
-const RegisterDTO = require("../dto/register.dto");
-const VerifyOtpDTO = require("../dto/verifyOtp.dto");
-const ResendOtpDTO = require("../dto/resendOtp.dto")
-const LoginDTO = require('../dto/login.dto')
-const { registerUser, verifyOtp, reSendOtp ,loginUser} = require("../services/auth.service");
+
+const { registerUser, verifyOtp, resendOtp, loginUser } = require("../services/auth.service");
 
 const register = async (req, res, next) => {
   try {
-    const dto = new RegisterDTO(req.body);
-    dto.validate();
-    const result = await registerUser(dto);
-    res.json(result);
+    const result = await registerUser(req.validatedBody); 
+    return res.status(201).json(result);
+   
   } catch (err) {
     next(err);
   }
@@ -17,43 +13,31 @@ const register = async (req, res, next) => {
 
 const verify = async (req, res, next) => {
   try {
-    const dto = new VerifyOtpDTO(req.body);
-    dto.validate();
-    const result = await verifyOtp(dto);
-    res.json(result);
+    const { email, otp } = req.body;
+    const result = await verifyOtp(email, otp);
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }
 };
 
-const reSend = async (req, res, next) => {
+const resend = async (req, res, next) => {
   try {
-    const dto = new ResendOtpDTO(req.body)
-    dto.validate();
-    const result = await reSendOtp(dto)
-    res.json(result)
-
-
+    const { email } = req.body;
+    const result = await resendOtp(email);
+    res.status(200).json(result);
   } catch (err) {
-      next(err);
-
+    next(err);
   }
-
-}
-
-const login = async (req, res, next) =>{
+};
+const login = async (req, res, next) => {
   try {
-    const dto = new LoginDTO(req.body);
-    dto.validate();
-
-    const result = await loginUser(dto);
-
-    return res.status(result.status).json(result);
-
+    const { email, password } = req.body;
+    const result = await loginUser(email, password);
+    res.status(200).json(result);
   } catch (err) {
-    return res.status(400).json({ message: err.message });
+    next(err);
   }
-}
+};
 
-
-module.exports = { register, verify, reSend, login };
+module.exports = { register, verify, resend, login };
