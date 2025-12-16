@@ -1,7 +1,7 @@
-version: '3.8'
+version: "3.9"
 
 services:
-  # MySQL Service
+  # MySQL service
   mysql:
     image: mysql:8
     container_name: chat-mysql
@@ -12,8 +12,12 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
 
-  # MongoDB Service
+  # MongoDB service
   mongo:
     image: mongo:6
     container_name: chat-mongo
@@ -21,55 +25,103 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      retries: 5
 
-  # Redis Service
+  # Redis service
   redis:
     image: redis:7
     container_name: chat-redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
 
-  # RabbitMQ Service
+  # RabbitMQ service
   rabbitmq:
     image: rabbitmq:3-management
     container_name: chat-rabbit
     ports:
       - "5672:5672"
       - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      retries: 5
 
-  # User Microservice
+  # MinIO service
+  minio:
+    image: minio/minio
+    container_name: chat-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      retries: 5
+    volumes:
+      - minio_data:/data
+
+  # User service
   user-service:
-    build: ./apps/user-service
+    build:
+      context: .
+      dockerfile: apps/user-service/Dockerfile.user-service
     container_name: user-service
     ports:
       - "4000:4000"
     environment:
+      STORAGE_HOST: storage-service
       NODE_ENV: development
       DB_HOST: mysql
       DB_USER: root
       DB_PASSWORD: password
       DB_NAME: quick_chat
       REDIS_HOST: redis
+      MINIO_HOST: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
 
-  # Message Microservice
-  # message-service:
-  #   build: ./apps/message-service
-  #   container_name: message-service
-  #   ports:
-  #     - "3001:3001"
-  #   environment:
-  #     NODE_ENV: development
-  #     MONGO_URI: mongodb://mongo:27017/quick_chat
-  #     REDIS_HOST: redis
-  #     RABBITMQ_HOST: rabbitmq
-  #   depends_on:
-  #     - mongo
-  #     - redis
-  #     - rabbitmq
+  # Storage service
+  storage-service:
+    build:
+      context: .
+      dockerfile: apps/storage-service/Dockerfile.storage-service
+    container_name: storage-service
+    ports:
+      - "50051:50051"
+    environment:
+      NODE_ENV: development
+      MINIO_HOST: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    depends_on:
+      minio:
+        condition: service_healthy
 
 volumes:
   mysql_data:
   mongo_data:
+  minio_data:

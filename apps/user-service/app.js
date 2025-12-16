@@ -1,7 +1,10 @@
+require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const authRoutes = require("./src/routes/auth.routes");
+const profileRoutes = require("./src/routes/profile.routes");
+
 const sequelize = require("../../libs/database/mysql"); // MySQL connection
 const redisClient = require("../../libs/database/redis"); // Redis connection
 
@@ -15,6 +18,7 @@ app.use(bodyParser.json());
 
 
 app.use("/api/auth", authRoutes);
+app.use("/api/profile", profileRoutes);
 
 
 app.use((err, req, res, next) => {
