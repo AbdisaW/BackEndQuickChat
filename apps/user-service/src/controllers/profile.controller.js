@@ -1,21 +1,17 @@
-const { uploadFile } = require("../services/storageServiceClient");
-const { findByEmail, verifyUser } = require("../repositories/user.repository");
+const { uploadProfilePictureService } = require("../services/profile.service");
 
 const uploadProfilePicture = async (req, res, next) => {
   try {
-    const file = req.file; // multer middleware
-    if (!file) return res.status(400).json({ message: "No file uploaded" });
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
 
-    // Upload to storage-service
-    const fileUrl = await uploadFile(file.originalname, file.buffer);
+    const result = await uploadProfilePictureService(
+      req.user.email,
+      req.file
+    );
 
-    // Save file URL in MySQL
-    const user = await findByEmail(req.user.email);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    await user.update({ profilePicture: fileUrl });
-
-    res.json({ message: "Profile picture uploaded successfully", fileUrl });
+    res.json(result);
   } catch (err) {
     next(err);
   }

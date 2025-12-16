@@ -57,8 +57,8 @@ async function UploadFile(call, callback) {
     console.log('Uploading file to MinIO...');
     await minioClient.putObject(bucketName, fileName, call.request.fileData);
     console.log('File uploaded:', fileName);
+    const fileUrl = `http://${process.env.MINIO_HOST}:${process.env.MINIO_PORT || 9000}/${bucketName}/${fileName}`;
 
-    const fileUrl = `http://${process.env.MINIO_HOST }:${process.env.MINIO_PORT || 9000}/${bucketName}/${fileName}`;
     callback(null, { fileUrl });
 
   } catch (err) {
