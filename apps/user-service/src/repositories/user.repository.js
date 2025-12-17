@@ -21,6 +21,26 @@ const verifyUser = async (email) => {
     { where: { email } }
   );
 };
+const getUserById = async (id) => {
+  return await User.findByPk(id);
+};
 
 
-module.exports = { createUser, findByEmail, verifyUser, updateProfilePicture };
+const updateUserById = async (id, data) => {
+  const [affectedRows] = await User.update(data, { where: { id }});
+  return affectedRows; 
+};
+
+const deleteUserById = async (id) => {
+  return await User.destroy({ where: { id } });
+};
+
+module.exports = {
+   createUser, 
+   findByEmail, 
+   verifyUser, 
+   updateProfilePicture,
+   getUserById,
+   updateUserById,
+   deleteUserById
+};
