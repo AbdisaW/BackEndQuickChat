@@ -2,11 +2,15 @@
   "name": "quickchat",
   "private": true,
   "version": "1.0.0",
-  "workspaces": ["apps/*", "libs/*"],
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
     "dotenv": "^17.2.3",
-    "minio": "^8.0.6"
+    "minio": "^8.0.6",
+    "mongoose": "^9.0.1"
   }
 }

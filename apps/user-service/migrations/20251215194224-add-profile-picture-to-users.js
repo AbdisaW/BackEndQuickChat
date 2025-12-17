@@ -4,7 +4,7 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.addColumn('users', 'profilePicture', {
       type: Sequelize.STRING,
-      allowNull: true, // users may not have a profile picture initially
+      allowNull: true,
     });
   },
 
