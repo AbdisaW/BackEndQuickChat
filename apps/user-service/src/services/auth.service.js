@@ -102,10 +102,6 @@ const updateUser = async (id, data) => {
   return userWithoutPassword;
 };
 
-module.exports = { updateUser };
-
-
-
 
 
 const deleteUser = async (id) => {
@@ -113,6 +109,7 @@ const deleteUser = async (id) => {
   if (!deleted) throw new Error("User not found");
   return { message: "User deleted successfully" };
 };
+
 
 
 module.exports = { 

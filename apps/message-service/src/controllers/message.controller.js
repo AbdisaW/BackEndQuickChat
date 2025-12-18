@@ -1,33 +1,56 @@
-const messageService = require('../services/message.service');
+const MessageService = require('../services/message.service');
 
+// Send a new message
 const sendMessage = async (req, res) => {
   try {
-    const { senderId, receiverId, content } = req.body;
-    const message = await messageService.sendMessage({ senderId, receiverId, content });
-    res.status(201).json({ success: true, data: message });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    const { from, to, text } = req.body;
+    const message = await MessageService.sendMessage({ from, to, text });
+    return res.status(201).json({ message });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to send message' });
   }
 };
 
-const getUserMessages = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const messages = await messageService.getUserMessages(userId);
-    res.status(200).json({ success: true, data: messages });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
-
+// Get conversation between two users
 const getConversation = async (req, res) => {
   try {
     const { user1, user2 } = req.params;
-    const messages = await messageService.getConversationBetweenUsers(user1, user2);
-    res.status(200).json({ success: true, data: messages });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    const conversation = await MessageService.getConversation(user1, user2);
+    return res.status(200).json({ conversation });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to fetch conversation' });
   }
 };
 
-module.exports = { sendMessage, getUserMessages, getConversation };
+// Mark conversation as read
+const markAsRead = async (req, res) => {
+  try {
+    const { user1, user2 } = req.params;
+    const result = await MessageService.markConversationAsRead(user1, user2);
+    return res.status(200).json({ updated: result.modifiedCount });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to mark messages as read' });
+  }
+};
+
+// Get unread messages count for a user
+const getUnreadCount = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const count = await MessageService.getUnreadMessagesCount(userId);
+    return res.status(200).json({ unreadCount: count });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to get unread count' });
+  }
+};
+
+module.exports = {
+  sendMessage,
+  getConversation,
+  markAsRead,
+  getUnreadCount,
+};

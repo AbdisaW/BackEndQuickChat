@@ -1,23 +1,32 @@
 const Message = require('../models/message.model');
 
-const createMessage = async (data) => {
-  const message = new Message(data);
-  return await message.save();
+// Create a new message
+const createMessage = async ({ conversationId, from, to, text }) => {
+  return await Message.create({ conversationId, from, to, text });
 };
 
-const getMessagesByUser = async (userId) => {
-  return await Message.find({
-    $or: [{ senderId: userId }, { receiverId: userId }]
-  }).sort({ timestamp: -1 });
-};
-
+// Get conversation messages between two users
 const getConversation = async (user1, user2) => {
-  return await Message.find({
-    $or: [
-      { senderId: user1, receiverId: user2 },
-      { senderId: user2, receiverId: user1 }
-    ]
-  }).sort({ timestamp: 1 });
+  const conversationId = [user1, user2].sort().join('_');
+  return await Message.find({ conversationId }).sort({ createdAt: 1 });
 };
 
-module.exports = { createMessage, getMessagesByUser, getConversation };
+// Mark all messages as read for a specific user
+const markAsRead = async (conversationId, userId) => {
+  return await Message.updateMany(
+    { conversationId, to: userId, read: false },
+    { $set: { read: true } }
+  );
+};
+
+// Count unread messages for a user
+const getUnreadCount = async (userId) => {
+  return await Message.countDocuments({ to: userId, read: false });
+};
+
+module.exports = {
+  createMessage,
+  getConversation,
+  markAsRead,
+  getUnreadCount,
+};
