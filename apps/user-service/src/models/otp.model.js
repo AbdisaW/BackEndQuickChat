@@ -1,4 +1,4 @@
-const redisClient = require('../../../../libs/database/redis');
+const {redisClient} = require('../../../../libs/database/redis');
 
 const OTP_PREFIX = "otp:";
 

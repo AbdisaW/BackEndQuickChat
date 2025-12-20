@@ -1,6 +1,7 @@
 // src/app.js
 const express = require('express');
 const http = require('http');
+const cors = require('cors');
 const { Server } = require('socket.io');
 const dotenv = require('dotenv');
 
@@ -13,12 +14,30 @@ const messageRoutes = require('./routes/message.routes');
 dotenv.config();
 
 const app = express();
+app.options('*', cors());
+
+// --- CORS for REST API ---
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
 app.use(express.json());
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
 
-// Connect DBs
+// --- Socket.IO setup with CORS ---
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5173', // allow your frontend
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
+
+// --- Connect DBs ---
 (async () => {
   await connectMongo(process.env.MONGO_URI);
   await connectRedis();
@@ -28,7 +47,7 @@ const io = new Server(server, { cors: { origin: '*' } });
   });
 })();
 
-// Routes
+// --- REST API routes ---
 app.use('/api', messageRoutes);
 
 // --- Socket.IO authentication middleware ---
@@ -43,7 +62,7 @@ io.use((socket, next) => {
   next();
 });
 
-// --- Socket.IO logic ---
+// --- Socket.IO events ---
 io.on('connection', (socket) => {
   console.log(`Authenticated user connected: ${socket.userId}`);
 
@@ -54,12 +73,18 @@ io.on('connection', (socket) => {
   });
 
   socket.on('send_message', async (data) => {
-    const { to, text } = data;
-    const from = socket.userId; // always authenticated user
-    const message = await MessageService.sendMessage({ from, to, text });
+    const { to, text, conversationId } = data;
+    const from = socket.userId;
 
+    // Save message in DB / Mongo
+    const message = await MessageService.sendMessage({ from, to, text, conversationId });
+
+    // Emit message to receiver if online
     const isOnline = await redisClient.sIsMember('online_users', to);
     if (isOnline) io.to(to).emit('receive_message', message);
+
+    // Optionally emit to sender to confirm sent message
+    socket.emit('receive_message', message);
   });
 
   socket.on('disconnect', async () => {
@@ -67,3 +92,5 @@ io.on('connection', (socket) => {
     console.log(`User ${socket.userId} disconnected`);
   });
 });
+
+module.exports = { app, server, io };

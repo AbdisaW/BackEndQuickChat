@@ -10,6 +10,10 @@ router.get('/conversations/:user1/:user2', (req, res) =>
   MessageController.getConversation(req, res)
 );
 
+router.get('/conversations', (req, res) =>
+  MessageController.getUserConversations(req, res)
+);
+
 // Mark conversation as read
 router.put('/conversations/:user1/:user2/read', (req, res) =>
   MessageController.markAsRead(req, res)

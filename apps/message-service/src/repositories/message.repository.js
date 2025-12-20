@@ -11,6 +11,24 @@ const getConversation = async (user1, user2) => {
   return await Message.find({ conversationId }).sort({ createdAt: 1 });
 };
 
+const getUserConversations = async (userId) => {
+  return await Message.aggregate([
+    {
+      $match: {
+        $or: [{ from: userId }, { to: userId }],
+      },
+    },
+    { $sort: { createdAt: -1 } },
+    {
+      $group: {
+        _id: '$conversationId',
+        lastMessage: { $first: '$$ROOT' },
+      },
+    },
+  ]);
+};
+
+
 // Mark all messages as read for a specific user
 const markAsRead = async (conversationId, userId) => {
   return await Message.updateMany(
@@ -29,4 +47,5 @@ module.exports = {
   getConversation,
   markAsRead,
   getUnreadCount,
+  getUserConversations
 };

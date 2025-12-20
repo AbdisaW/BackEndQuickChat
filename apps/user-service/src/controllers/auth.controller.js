@@ -1,5 +1,5 @@
 
-const { registerUser, verifyOtp, resendOtp, loginUser, getUser, updateUser, deleteUser } = require("../services/auth.service");
+const { registerUser, verifyOtp, resendOtp, loginUser, getUserByIdService, updateUser, deleteUser, getAllUsers , logoutUser} = require("../services/auth.service");
 
 const register = async (req, res, next) => {
   try {
@@ -40,10 +40,18 @@ const login = async (req, res, next) => {
   }
 };
 
+const logout = async (req, res, next) => {
+  try {
+    const result = await logoutUser(req.user);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 const getMyProfile = async (req, res, next) => {
   try {
-    console.log("req.user.id:", req.user.id);
-    const user = await getUser(req.user.id);
+    const user = await getUserByIdService(req.user.id);
     res.status(200).json(user);
   } catch (err) {
     next(err);
@@ -69,10 +77,35 @@ const deleteMyProfile = async (req, res, next) => {
   }
 };
 
+const listUsers = async (req, res, next) => {
+  try {
+    const users = await getAllUsers();
+    res.status(200).json({ users });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+const getUserById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await getUserByIdService(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    next(error);
+  }
+};
 
 
 
 module.exports = {
-   register, verify, resend, login,
-   getMyProfile, updateMyProfile, deleteMyProfile
+   register, verify, resend, login,logout,
+   getMyProfile, updateMyProfile, deleteMyProfile, listUsers, getUserById
 };

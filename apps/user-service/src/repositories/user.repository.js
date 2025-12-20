@@ -25,6 +25,9 @@ const getUserById = async (id) => {
   return await User.findByPk(id);
 };
 
+const findUserById = async (id) => {
+  return User.findByPk(id);
+};
 
 const updateUserById = async (id, data) => {
   const [affectedRows] = await User.update(data, { where: { id }});
@@ -35,6 +38,11 @@ const deleteUserById = async (id) => {
   return await User.destroy({ where: { id } });
 };
 
+const findAllUsers = async () => {
+  return await User.findAll();
+};
+
+
 module.exports = {
    createUser, 
    findByEmail, 
@@ -42,5 +50,5 @@ module.exports = {
    updateProfilePicture,
    getUserById,
    updateUserById,
-   deleteUserById
+   deleteUserById, findAllUsers, findUserById
 };

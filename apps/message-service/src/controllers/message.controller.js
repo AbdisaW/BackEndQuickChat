@@ -24,6 +24,16 @@ const getConversation = async (req, res) => {
   }
 };
 
+const getUserConversations = async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const conversations = await MessageService.getUserConversations(userId);
+    res.status(200).json({ conversations });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch conversations' });
+  }
+};
+
 // Mark conversation as read
 const markAsRead = async (req, res) => {
   try {
@@ -53,4 +63,5 @@ module.exports = {
   getConversation,
   markAsRead,
   getUnreadCount,
+  getUserConversations
 };

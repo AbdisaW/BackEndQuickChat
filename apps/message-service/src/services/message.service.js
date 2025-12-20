@@ -9,6 +9,11 @@ const getConversation = async (user1, user2) => {
   return await MessageRepository.getConversation(user1, user2);
 };
 
+const getUserConversations = async (userId) => {
+  return await MessageRepository.getUserConversations(userId);
+};
+
+
 const markConversationAsRead = async (user1, user2) => {
   const conversationId = [user1, user2].sort().join('_');
   return await MessageRepository.markAsRead(conversationId, user2);
@@ -18,4 +23,4 @@ const getUnreadMessagesCount = async (userId) => {
   return await MessageRepository.getUnreadCount(userId);
 };
 
-module.exports = { sendMessage, getConversation, markConversationAsRead, getUnreadMessagesCount };
+module.exports = { sendMessage, getConversation, markConversationAsRead, getUnreadMessagesCount, getUserConversations };

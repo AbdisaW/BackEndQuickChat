@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
-const { createUser, findByEmail, verifyUser, getUserById, updateUserById, deleteUserById } = require("../repositories/user.repository");
+const { createUser, findByEmail, verifyUser, getUserById, updateUserById, deleteUserById, findAllUsers, findUserById } = require("../repositories/user.repository");
 const { setOtp, getOtp, deleteOtp } = require("../models/otp.model");
-const {sign} = require('../../../../libs/auth/jwt')
+const { sign } = require('../../../../libs/auth/jwt')
 const crypto = require("crypto");
 
 const registerUser = async ({ firstName, lastName, email, password }) => {
@@ -33,7 +33,7 @@ const resendOtp = async (email) => {
   const user = await findByEmail(email);
   if (!user) throw new Error("User not found");
 
-  if(user.status !== "PENDING") throw new Error ("user is active ")
+  if (user.status !== "PENDING") throw new Error("user is active ")
   const otp = crypto.randomInt(100000, 999999).toString();
   await setOtp(email, otp);
 
@@ -41,7 +41,7 @@ const resendOtp = async (email) => {
   return { message: "OTP resent successfully" };
 };
 const loginUser = async (email, password) => {
-  const user = await  findByEmail(email);
+  const user = await findByEmail(email);
   if (!user) throw new Error("Invalid credentials");
 
   if (!user.isVerified) throw new Error("User not verified");
@@ -54,11 +54,17 @@ const loginUser = async (email, password) => {
   return { user: userWithoutPassword, token };
 };
 
-const getUser = async (id) => {
-  const user = await getUserById(id);
-  if (!user) throw new Error("User not found");
-  const { password, ...userWithoutPassword } = user.toJSON();
-  return userWithoutPassword;
+const logoutUser = async () => {
+  // JWT logout is handled on client by removing token
+  return { message: "Logged out successfully" };
+};
+
+const getUserByIdService = async (id) => {
+  const user = await findUserById(id);
+  if (!user) return null;
+
+  const { password, ...safeUser } = user.toJSON();
+  return safeUser;
 };
 
 
@@ -102,20 +108,25 @@ const updateUser = async (id, data) => {
   return userWithoutPassword;
 };
 
-
-
 const deleteUser = async (id) => {
   const deleted = await deleteUserById(id);
   if (!deleted) throw new Error("User not found");
   return { message: "User deleted successfully" };
 };
 
+const getAllUsers = async () => {
+  const users = await findAllUsers();
+  return users.map(u => {
+    const { password, ...safe } = u.toJSON();
+    return safe;
+  });
+};
 
 
-module.exports = { 
-  registerUser, verifyOtp, 
+module.exports = {
+  registerUser, verifyOtp,
   resendOtp, loginUser,
-  getUser, updateUser,
-  deleteUser
+  getUserByIdService, updateUser,
+  deleteUser, getAllUsers, logoutUser
 
 };
