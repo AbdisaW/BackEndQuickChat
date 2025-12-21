@@ -2,7 +2,7 @@
 const { Sequelize } = require('sequelize');
 
 const sequelize = new Sequelize('quick_chat', 'root', 'password', {
-  host: 'mysql',
+  host: 'localhost',
   dialect: 'mysql',
   logging: false, 
 });

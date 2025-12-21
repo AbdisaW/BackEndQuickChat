@@ -2,10 +2,12 @@ const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema(
   {
-    conversationId: { type: String, required: true }, 
-    from: { type: String, required: true },           
-    to: { type: String, required: true },             
-    text: { type: String, required: true },
+    conversationId: { type: String, required: true },
+    from: { type: String, required: true },
+    to: { type: String, required: true },
+    text: { type: String },
+    type: { type: String, enum: ['text','image','file','audio','video'], default: 'text' },
+    url: { type: String }, // optional for media
     read: { type: Boolean, default: false },
   },
   { timestamps: true } // adds createdAt & updatedAt
