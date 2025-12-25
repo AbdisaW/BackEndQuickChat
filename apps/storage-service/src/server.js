@@ -41,6 +41,7 @@ async function UploadFile(call, callback) {
     });
 
     validateFile(call.request.fileName, call.request.fileData);
+  
 
     const fileName = `${uuidv4()}-${call.request.fileName}`;
     const bucketName = 'user-profile-pictures';
@@ -54,10 +55,34 @@ async function UploadFile(call, callback) {
     }
 
     // Upload file
+    // console.log('Uploading file to MinIO...');
+    // await minioClient.putObject(bucketName, fileName, call.request.fileData);
+    // console.log('File uploaded:', fileName);
+    // const fileUrl = `http://${process.env.MINIO_HOST}:${process.env.MINIO_PORT || 9000}/${bucketName}/${fileName}`;
+
+
+    console.log("New...")
     console.log('Uploading file to MinIO...');
-    await minioClient.putObject(bucketName, fileName, call.request.fileData);
-    console.log('File uploaded:', fileName);
-    const fileUrl = `http://${process.env.MINIO_HOST}:${process.env.MINIO_PORT || 9000}/${bucketName}/${fileName}`;
+await minioClient.putObject(
+  bucketName,
+  fileName,
+  call.request.fileData
+);
+console.log('File uploaded:', fileName);
+
+// Generate presigned URL (valid for 1 hour)
+const expirySeconds = 60 * 60;
+
+const fileUrl = await minioClient.presignedGetObject(
+  bucketName,
+  fileName,
+  expirySeconds
+);
+
+console.log('Presigned URL:', fileUrl);
+
+
+
 
     callback(null, { fileUrl });
 

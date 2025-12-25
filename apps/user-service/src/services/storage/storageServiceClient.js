@@ -29,6 +29,7 @@ function uploadFile(fileName, fileBuffer) {
   return new Promise((resolve, reject) => {
     client.UploadFile({ fileName, fileData: fileBuffer }, (err, response) => {
       if (err) return reject(err);
+      console.log("response",response.fileUrl)
       resolve(response.fileUrl);
     });
   });

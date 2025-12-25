@@ -20,7 +20,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: { origin: 'http://localhost:5173', credentials: true },
-  transports: ['websocket', 'polling'], // force websocket first, fallback to polling
+  transports: ['websocket', 'polling'],
 });
 
 // --- Connect DBs ---
@@ -48,43 +48,53 @@ io.use((socket, next) => {
 });
 
 // --- Socket.IO events ---
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   const userId = socket.userId;
-  socket.hasJoined = false;
-
   console.log(`User connected: ${userId} (${socket.id})`);
 
-  // JOIN (multi-tab safe)
-  socket.on('join', async () => {
-    if (socket.hasJoined) return;
-    socket.hasJoined = true;
+  // Join personal room
+  socket.join(userId);
 
-    socket.join(userId);
-    await redisClient.sAdd(`user_sockets:${userId}`, socket.id);
+  // Track sockets
+  await redisClient.sAdd(`user_sockets:${userId}`, socket.id);
 
-    const count = await redisClient.sCard(`user_sockets:${userId}`);
-    if (count === 1) io.emit('user_online', userId);
+  const socketCount = await redisClient.sCard(`user_sockets:${userId}`);
 
-    console.log(`User ${userId} joined with socket ${socket.id}`);
-  });
+  // First socket → user becomes online
+  if (socketCount === 1) {
+    await redisClient.sAdd('online_users', userId);
+    socket.broadcast.emit('user_online', userId);
+  }
+
+  // Send full online list to this user
+  const onlineUsers = await redisClient.sMembers('online_users');
+  socket.emit('online_users', onlineUsers);
 
   // SEND MESSAGE
   socket.on('send_message', async ({ to, text }) => {
     const from = userId;
     const conversationId = [from, to].sort().join('_');
 
-    const message = await MessageService.sendMessage({ from, to, text, conversationId });
+    const message = await MessageService.sendMessage({
+      from,
+      to,
+      text,
+      conversationId,
+    });
 
-    // Emit to all sockets of sender and receiver
     const fromSockets = await redisClient.sMembers(`user_sockets:${from}`);
     const toSockets = await redisClient.sMembers(`user_sockets:${to}`);
-    [...fromSockets, ...toSockets].forEach(sid => io.to(sid).emit('receive_message', message));
+
+    [...fromSockets, ...toSockets].forEach((sid) =>
+      io.to(sid).emit('receive_message', message)
+    );
   });
 
   // TYPING
   socket.on('typing', ({ to }) => {
     if (to) socket.to(to).emit('typing', { from: userId });
   });
+
   socket.on('stop_typing', ({ to }) => {
     if (to) socket.to(to).emit('stop_typing', { from: userId });
   });
@@ -92,8 +102,13 @@ io.on('connection', (socket) => {
   // DISCONNECT
   socket.on('disconnect', async () => {
     await redisClient.sRem(`user_sockets:${userId}`, socket.id);
+
     const count = await redisClient.sCard(`user_sockets:${userId}`);
-    if (count === 0) io.emit('user_offline', userId);
+    if (count === 0) {
+      await redisClient.sRem('online_users', userId);
+      socket.broadcast.emit('user_offline', userId);
+    }
+
     console.log(`Socket ${socket.id} disconnected for user ${userId}`);
   });
 });

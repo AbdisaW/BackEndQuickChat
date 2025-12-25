@@ -89,68 +89,68 @@ services:
       - minio_data:/data
 
   # User service
-  user-service:
-    build:
-      context: .
-      dockerfile: apps/user-service/Dockerfile.user-service
-    container_name: user-service
-    ports:
-      - "4000:4000"
-    environment:
-      NODE_ENV: development
-      DB_HOST: mysql
-      DB_USER: root
-      DB_PASSWORD: password
-      DB_NAME: quick_chat
-      REDIS_HOST: redis
-      MINIO_HOST: minio
-      MINIO_PORT: 9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
+  # user-service:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/user-service/Dockerfile.user-service
+  #   container_name: user-service
+  #   ports:
+  #     - "4000:4000"
+  #   environment:
+  #     NODE_ENV: development
+  #     DB_HOST: mysql
+  #     DB_USER: root
+  #     DB_PASSWORD: password
+  #     DB_NAME: quick_chat
+  #     REDIS_HOST: redis
+  #     MINIO_HOST: minio
+  #     MINIO_PORT: 9000
+  #     MINIO_ACCESS_KEY: minioadmin
+  #     MINIO_SECRET_KEY: minioadmin
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
 
   # Storage service
-  storage-service:
-    build:
-      context: .
-      dockerfile: apps/storage-service/Dockerfile.storage-service
-    container_name: storage-service
-    ports:
-      - "50051:50051"
-    environment:
-      NODE_ENV: development
-      MINIO_HOST: minio
-      MINIO_PORT: 9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-    depends_on:
-      minio:
-        condition: service_healthy
+  # storage-service:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/storage-service/Dockerfile.storage-service
+  #   container_name: storage-service
+  #   ports:
+  #     - "50051:50051"
+  #   environment:
+  #     NODE_ENV: development
+  #     MINIO_HOST: minio
+  #     MINIO_PORT: 9000
+  #     MINIO_ACCESS_KEY: minioadmin
+  #     MINIO_SECRET_KEY: minioadmin
+  #   depends_on:
+  #     minio:
+  #       condition: service_healthy
 
   # Message service
-  message-service:
-    build:
-      context: .
-      dockerfile: apps/message-service/Dockerfile
-    container_name: message-service
-    ports:
-      - "4002:4002"
-    environment:
-      NODE_ENV: development
-      PORT: 4002
-      MONGO_URI: mongodb://mongo:27017/quick_chat
-      REDIS_HOST: redis
-    depends_on:
-      redis:
-        condition: service_healthy
-      mongo:
-        condition: service_healthy
+  # message-service:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/message-service/Dockerfile
+  #   container_name: message-service
+  #   ports:
+  #     - "4002:4002"
+  #   environment:
+  #     NODE_ENV: development
+  #     PORT: 4002
+  #     MONGO_URI: mongodb://mongo:27017/quick_chat
+  #     REDIS_HOST: redis
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #     mongo:
+  #       condition: service_healthy
 
 volumes:
   mysql_data:
