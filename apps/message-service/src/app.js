@@ -3,7 +3,7 @@ const http = require('http');
 const cors = require('cors');
 const { Server } = require('socket.io');
 const dotenv = require('dotenv');
-
+const Message = require('./models/message.model');
 const { connectMongo } = require('../../../libs/database/mongo');
 const { connectRedis, redisClient } = require('../../../libs/database/redis');
 const MessageService = require('./services/message.service');
@@ -23,7 +23,7 @@ const io = new Server(server, {
   transports: ['websocket', 'polling'],
 });
 
-// --- Connect DBs ---
+// ---------------- DB CONNECT ----------------
 (async () => {
   await connectMongo(process.env.MONGO_URI);
   await connectRedis();
@@ -32,10 +32,10 @@ const io = new Server(server, {
   });
 })();
 
-// REST API
+// REST
 app.use('/api', messageRoutes);
 
-// Socket.IO auth
+// ---------------- SOCKET AUTH ----------------
 io.use((socket, next) => {
   const token = socket.handshake.auth?.token;
   if (!token) return next(new Error('Unauthorized'));
@@ -47,59 +47,93 @@ io.use((socket, next) => {
   next();
 });
 
-// --- Socket.IO events ---
+// ---------------- SOCKET ----------------
 io.on('connection', async (socket) => {
   const userId = socket.userId;
-  console.log(`User connected: ${userId} (${socket.id})`);
+  console.log(`User connected: ${userId}`);
 
-  // Join personal room
   socket.join(userId);
-
-  // Track sockets
   await redisClient.sAdd(`user_sockets:${userId}`, socket.id);
 
+  // ---------- ONLINE ----------
   const socketCount = await redisClient.sCard(`user_sockets:${userId}`);
-
-  // First socket → user becomes online
   if (socketCount === 1) {
     await redisClient.sAdd('online_users', userId);
     socket.broadcast.emit('user_online', userId);
   }
 
-  // Send full online list to this user
-  const onlineUsers = await redisClient.sMembers('online_users');
-  socket.emit('online_users', onlineUsers);
+  socket.emit('online_users', await redisClient.sMembers('online_users'));
 
-  // SEND MESSAGE
+  // ---------- OFFLINE → DELIVER ----------
+  const offlineMessages = await Message.find({
+    to: userId,
+    status: 'sent',
+  });
+
+  for (const msg of offlineMessages) {
+    socket.emit('receive_message', msg);
+
+    msg.status = 'delivered';
+    await msg.save();
+
+    // notify sender ✔✔
+    io.to(msg.from).emit('message_status', {
+      chatId: msg.conversationId,
+      messageId: msg._id,
+      status: 'delivered',
+    });
+  }
+
+  // ---------- SEND MESSAGE ----------
   socket.on('send_message', async ({ to, text }) => {
-    const from = userId;
-    const conversationId = [from, to].sort().join('_');
+    const conversationId = [userId, to].sort().join('_');
 
     const message = await MessageService.sendMessage({
-      from,
+      from: userId,
       to,
       text,
       conversationId,
     });
 
-    const fromSockets = await redisClient.sMembers(`user_sockets:${from}`);
+    const fromSockets = await redisClient.sMembers(`user_sockets:${userId}`);
     const toSockets = await redisClient.sMembers(`user_sockets:${to}`);
+
+    if (toSockets.length > 0) {
+      message.status = 'delivered';
+      await message.save();
+    }
 
     [...fromSockets, ...toSockets].forEach((sid) =>
       io.to(sid).emit('receive_message', message)
     );
   });
 
-  // TYPING
+  // ---------- READ (🟢) ----------
+  socket.on('message_seen', async ({ messageId }) => {
+    const msg = await Message.findById(messageId);
+    if (!msg || msg.status === 'read') return;
+
+    msg.status = 'read';
+    await msg.save();
+
+    // notify sender 🟢
+    io.to(msg.from).emit('message_status', {
+      chatId: msg.conversationId,
+      messageId: msg._id,
+      status: 'read',
+    });
+  });
+
+  // ---------- TYPING ----------
   socket.on('typing', ({ to }) => {
-    if (to) socket.to(to).emit('typing', { from: userId });
+    socket.to(to).emit('typing', { from: userId });
   });
 
   socket.on('stop_typing', ({ to }) => {
-    if (to) socket.to(to).emit('stop_typing', { from: userId });
+    socket.to(to).emit('stop_typing', { from: userId });
   });
 
-  // DISCONNECT
+  // ---------- DISCONNECT ----------
   socket.on('disconnect', async () => {
     await redisClient.sRem(`user_sockets:${userId}`, socket.id);
 
@@ -108,8 +142,6 @@ io.on('connection', async (socket) => {
       await redisClient.sRem('online_users', userId);
       socket.broadcast.emit('user_offline', userId);
     }
-
-    console.log(`Socket ${socket.id} disconnected for user ${userId}`);
   });
 });
 

@@ -1,8 +1,8 @@
 const Message = require('../models/message.model');
 
 // Create a new message
-const createMessage = async ({ conversationId, from, to, text }) => {
-  return await Message.create({ conversationId, from, to, text });
+const createMessage = async ({ conversationId, from, to, text, url, status = 'sent'  }) => {
+  return await Message.create({ conversationId, from, to, text, url, status });
 };
 
 // Get conversation messages between two users

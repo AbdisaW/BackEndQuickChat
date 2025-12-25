@@ -6,11 +6,15 @@ const messageSchema = new mongoose.Schema(
     from: { type: String, required: true },
     to: { type: String, required: true },
     text: { type: String },
-    type: { type: String, enum: ['text','image','file','audio','video'], default: 'text' },
-    url: { type: String }, 
-    read: { type: Boolean, default: false },
+    type: { type: String, enum: ['text', 'image', 'file', 'audio', 'video'], default: 'text' },
+    url: { type: String },
+     status: {
+      type: String,
+      enum: ['sent', 'delivered', 'read'],
+      default: 'sent', 
+    },
   },
-  { timestamps: true } 
+  { timestamps: true }
 );
 
 const Message = mongoose.model('Message', messageSchema);
